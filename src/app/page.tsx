@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation'
+"use client"
 
-export default function Home() {
-  redirect('/welcome')
+import SkillreelApp from "@/skillreel-app"
+
+export default function Page() {
+  return <SkillreelApp />
 }
