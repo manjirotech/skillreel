@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Play, Square, RotateCcw, Check, Camera, Mic, AlertCircle, FlipHorizontal, X, Sparkles } from "lucide-react"
+import { Play, Square, RotateCcw, Check, Camera, Mic, AlertCircle, FlipHorizontal, Sparkles, StopCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AnimatedButton from "./AnimatedButton"
 import { useToast } from "@/components/ui/use-toast"
@@ -132,13 +132,14 @@ export default function VideoRecorder({
     try {
       const recorder = new MediaRecorder(stream, {
         mimeType: MediaRecorder.isTypeSupported("video/webm") ? "video/webm" : "video/mp4",
-        videoBitsPerSecond: 1000000, // 1 Mbps - lower quality to save space
+        videoBitsPerSecond: 1000000,
       })
 
       chunksRef.current = []
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log("event.data", event.data)
           chunksRef.current.push(event.data)
         }
       }
@@ -377,6 +378,8 @@ export default function VideoRecorder({
     )
   }
 
+  console.log("recordedVideoUrl", recordedVideoUrl)
+
   if (showPreview && recordedVideoUrl) {
     return (
       <div className="space-y-6 animate-scale-in">
@@ -418,14 +421,14 @@ export default function VideoRecorder({
           <Button
             onClick={handleRetake}
             variant="outline"
-            className="flex-1 h-14 hover:scale-105 transition-all duration-300 rounded-2xl border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
+            className="flex-1 h-14 hover:scale-105 transition-all duration-300 rounded-md border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
           >
             <RotateCcw className="w-5 h-5 mr-2" />
-            Retake Video
+            Retake 
           </Button>
-          <AnimatedButton onClick={handleNext} variant="primary" className="flex-1 h-14 rounded-2xl">
+          <AnimatedButton onClick={handleNext} variant="primary" className="flex-1 h-14">
             <Check className="w-5 h-5 mr-2" />
-            Continue Journey
+            Continue 
           </AnimatedButton>
         </div>
       </div>
@@ -542,14 +545,6 @@ export default function VideoRecorder({
                     </div>
                   </div>
                 </div>
-                {/* Minimum recording time indicator */}
-                {!canStopRecording && (
-                  <div className="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-30">
-                    <div className="bg-black/70 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm border border-white/20">
-                      Record for {3 - recordingTime} more seconds
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -600,28 +595,32 @@ export default function VideoRecorder({
       </div>
 
       {/* Modern Recording Controls */}
-      <div className={`text-center space-y-4 ${isFullscreen ? "flex-shrink-0" : ""}`}>
+      <div className={`text-center ${
+        isFullscreen
+          ? "flex-shrink-0 space-y-4" 
+          : "sticky bottom-0 z-20 py-4 space-y-4 w-full" 
+      }`}>
         {!isRecording ? (
           <AnimatedButton
             onClick={startRecording}
             disabled={!stream || isInitializing}
             variant="primary"
-            className="h-16 text-lg font-semibold rounded-2xl"
+            className="h-12 text-lg font-semibold rounded-md w-full max-w-xs mx-auto" 
           >
             <Play className="w-6 h-6 mr-3" />
             Start Recording
           </AnimatedButton>
         ) : (
           <Button
-            onClick={stopRecording}
+            onClick={stopRecording} 
             disabled={!canStopRecording}
             className={`w-full h-16 ${
               canStopRecording
                 ? "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
                 : "bg-gray-400 cursor-not-allowed"
-            } text-white rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 font-semibold text-lg shadow-lg`}
+            } text-white rounded-md transition-all duration-300 hover:scale-105 active:scale-95 font-semibold text-lg shadow-lg`}
           >
-            <Square className="w-6 h-6 mr-3" />
+            <StopCircle width={24} height={24} className="mr-1" /> 
             {canStopRecording ? "Stop Recording" : `Record for ${3 - recordingTime} more seconds`}
           </Button>
         )}
@@ -640,17 +639,6 @@ export default function VideoRecorder({
           </div>
         )}
       </div>
-
-      {/* Modern Exit fullscreen button */}
-      {isFullscreen && (
-        <button
-          onClick={exitFullscreen}
-          className="absolute top-4 right-4 bg-white/20 text-white p-3 rounded-full hover:bg-white/30 transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20 z-50"
-          aria-label="Exit fullscreen"
-        >
-          <X className="w-6 h-6" />
-        </button>
-      )}
     </div>
   )
 }

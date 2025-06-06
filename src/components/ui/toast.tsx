@@ -27,8 +27,10 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
-        destructive: "destructive group border-destructive bg-destructive text-destructive-foreground",
+        default:
+          "border-slate-200/80 bg-white/80 dark:border-slate-700/80 dark:bg-slate-950/80 backdrop-blur-lg text-slate-900 dark:text-slate-100 rounded-xl shadow-2xl",
+        destructive:
+          "destructive group border-red-500/30 bg-red-600 dark:bg-red-700 text-white rounded-xl shadow-2xl",
       },
     },
     defaultVariants: {
@@ -52,7 +54,11 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 group-[.destructive]:hover:border-destructive/30 group-[.destructive]:hover:bg-destructive group-[.destructive]:hover:text-destructive-foreground group-[.destructive]:focus:ring-destructive",
+      "inline-flex h-9 shrink-0 items-center justify-center rounded-lg px-3.5 text-sm font-semibold ring-offset-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-60",
+      // Default variant action button:
+      "border border-slate-300 bg-transparent hover:bg-slate-100 text-slate-700 dark:border-slate-700 dark:hover:bg-slate-800 dark:text-slate-300 dark:hover:text-slate-100",
+      // Destructive variant action button:
+      "group-[.destructive]:border-transparent group-[.destructive]:bg-red-700 group-[.destructive]:hover:bg-red-800 group-[.destructive]:text-red-100 group-[.destructive]:focus:ring-red-500",
       className,
     )}
     {...props}
@@ -67,7 +73,11 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-2.5 top-2.5 rounded-full p-1.5 opacity-0 transition-all hover:bg-black/5 dark:hover:bg-white/5 focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+      // Default variant icon color:
+      "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200",
+      // Destructive variant icon color (these classes will override the default ones above when .destructive is present on the group):
+      "group-[.destructive]:text-red-200 group-[.destructive]:hover:text-white group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
       className,
     )}
     toast-close=""
