@@ -63,14 +63,14 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-400 via-purple-300 to-blue-200 p-6 py-12">
+    <div className="min-h-screen bg-[url('../assets/background.png')] bg-cover bg-center p-6 py-8">
       <div className="w-full max-w-sm mx-auto">
         {/* Header */}
         <div className="text-center mb-6 animate-fade-in-up">
-          <h2 className="text-2xl font-bold text-black mb-2">
-            Tell us about <span className="text-purple-600">yourself</span>
+          <h2 className="text-2xl font-black text-black mb-1 font-family-plus-jakarta">
+            Tell us about <span style={{ backgroundImage: "linear-gradient(91.63deg, #AC5EF8 56.26%, #833FD9 66.13%, #3B09A3 86.28%)" }} className="bg-clip-text text-transparent">yourself</span>
           </h2>
-          <p className="text-gray-700">We'll personalize your experience</p>
+          <p className="text-[#555555] font-semibold font-family-poppins">We'll personalize your experience</p>
         </div>
 
         {/* Progress Bar */}
@@ -95,8 +95,8 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
         <div className="space-y-6">
           {/* Full Name */}
           <div className="animate-fade-in-up animation-delay-200">
-            <Label htmlFor="name" className="text-sm font-medium text-black mb-2 block">
-              Full Name *
+            <Label htmlFor="name" className="text-sm font-medium text-[#101010] mb-1 block">
+              Full Name <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
               <Input
@@ -105,12 +105,12 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
                 placeholder="Enter your full name"
                 value={userInfo.name}
                 onChange={(e) => setUserInfo((prev) => ({ ...prev, name: e.target.value }))}
-                className={`h-12 bg-white/50 border rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-10 ${
+                className={`h-12 bg-transparent border border-[#838383] rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-4 ${
                   getFieldStatus(isNameValid, !!userInfo.name) === "success"
                     ? "border-green-500 focus:border-green-500 focus:shadow-green"
                     : getFieldStatus(isNameValid, !!userInfo.name) === "error"
                       ? "border-red-500 focus:border-red-500 focus:shadow-red"
-                      : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
+                      : "border-[#838383] focus:border-purple-500 focus:shadow-purple"
                 } hover:bg-white/60 focus:bg-white/70`}
               />
               {userInfo.name && (
@@ -130,21 +130,21 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
 
           {/* Country */}
           <div className="animate-fade-in-up animation-delay-300">
-            <Label htmlFor="country" className="text-sm font-medium text-black mb-2 block">
-              Country *
+            <Label htmlFor="country" className="text-sm font-medium text-[#101010] mb-1 block">
+              Country <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
               <Select value={userInfo.country} onValueChange={handleCountryChange}>
                 <SelectTrigger
-                  className={`h-12 bg-white/50 border rounded-lg text-black transition-all duration-300 pr-10 ${
+                  className={`h-12 bg-transparent border border-[#838383] rounded-lg text-black transition-all duration-300 pr-4 ${
                     getFieldStatus(isCountryValid, !!userInfo.country) === "success"
-                      ? "border-green-500 focus:border-green-500 focus:shadow-green"
-                      : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
+                      ? "border-green-500 focus:border-green-500 focus:shadow-green bg-white/50"
+                      : "border-[#838383] focus:border-purple-500 focus:shadow-purple"
                   } hover:bg-white/60 focus:bg-white/70`}
                 >
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white/100">
                   {COUNTRIES.map((country) => (
                     <SelectItem key={country.name} value={country.name}>
                       <div className="flex items-center space-x-2">
@@ -165,8 +165,8 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
 
           {/* Mobile No */}
           <div className="animate-fade-in-up animation-delay-400">
-            <Label htmlFor="mobile" className="text-sm font-medium text-black mb-2 block">
-              Mobile No *
+            <Label htmlFor="mobile" className="text-sm font-medium text-[#101010] mb-1 block">
+              Mobile No <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
               <Input
@@ -179,16 +179,16 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
                   const fullNumber = countryCode ? `${countryCode} ${e.target.value}` : e.target.value
                   setUserInfo((prev) => ({ ...prev, mobile: fullNumber }))
                 }}
-                className={`h-12 bg-white/50 border rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-10 ${
+                className={`h-12 bg-transparent border border-[#838383] rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-4 ${
                   getFieldStatus(isMobileValid, !!userInfo.mobile) === "success"
-                    ? "border-green-500 focus:border-green-500 focus:shadow-green"
+                    ? "border-green-500 focus:border-green-500 focus:shadow-green bg-white/50"
                     : getFieldStatus(isMobileValid, !!userInfo.mobile) === "error"
                       ? "border-red-500 focus:border-red-500 focus:shadow-red"
-                      : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
+                      : "border-[#838383] focus:border-purple-500 focus:shadow-purple"
                 } hover:bg-white/60 focus:bg-white/70`}
                 disabled={!userInfo.country}
                 style={{
-                  paddingLeft: userInfo.country && getCountryCode(userInfo.country) ? "70px" : "12px",
+                  paddingLeft: userInfo.country && getCountryCode(userInfo.country) ? "60px" : "12px",
                 }}
               />
 
@@ -222,8 +222,8 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
 
           {/* Email */}
           <div className="animate-fade-in-up animation-delay-500">
-            <Label htmlFor="email" className="text-sm font-medium text-black mb-2 block">
-              Email <span className="text-gray-500">(Optional)</span>
+            <Label htmlFor="email" className="text-sm font-medium text-[#101010] mb-1 block">
+              Email <span className="text-[#555555]">(Optional)</span>
             </Label>
             <div className="relative">
               <Input
@@ -232,12 +232,12 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
                 placeholder="you@email.com"
                 value={userInfo.email}
                 onChange={(e) => setUserInfo((prev) => ({ ...prev, email: e.target.value }))}
-                className={`h-12 bg-white/50 border rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-10 ${
+                className={`h-12 bg-transparent border border-[#838383] rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-4 ${
                   getFieldStatus(isEmailValid, !!userInfo.email) === "success"
-                    ? "border-green-500 focus:border-green-500 focus:shadow-green"
+                    ? "border-green-500 focus:border-green-500 focus:shadow-green bg-white/50"
                     : getFieldStatus(isEmailValid, !!userInfo.email) === "error"
                       ? "border-red-500 focus:border-red-500 focus:shadow-red"
-                      : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
+                      : "border-[#838383] focus:border-purple-500 focus:shadow-purple"
                 } hover:bg-white/60 focus:bg-white/70`}
               />
               {userInfo.email && (
@@ -257,8 +257,8 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
 
           {/* Current Role */}
           <div className="animate-fade-in-up animation-delay-600">
-            <Label htmlFor="role" className="text-sm font-medium text-black mb-2 block">
-              Current Role *
+            <Label htmlFor="role" className="text-sm font-medium text-[#101010] mb-1 block">
+              Current Role <span className="text-red-500">*</span>
             </Label>
             <div className="relative">
               <Select
@@ -266,15 +266,15 @@ export default function PersonalInfoScreen({ onNext, userInfo, setUserInfo }: Pe
                 onValueChange={(value) => setUserInfo((prev) => ({ ...prev, role: value }))}
               >
                 <SelectTrigger
-                  className={`h-12 bg-white/50 border rounded-lg text-black transition-all duration-300 pr-10 ${
+                  className={`h-12 bg-transparent border border-[#838383] rounded-lg text-black transition-all duration-300 pr-4 ${
                     getFieldStatus(isRoleValid, !!userInfo.role) === "success"
-                      ? "border-green-500 focus:border-green-500 focus:shadow-green"
-                      : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
+                      ? "border-green-500 focus:border-green-500 focus:shadow-green bg-white/50"
+                      : "border-[#838383] focus:border-purple-500 focus:shadow-purple"
                   } hover:bg-white/60 focus:bg-white/70`}
                 >
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white/100">
                   {ROLES.map((role) => (
                     <SelectItem key={role} value={role}>
                       {role}

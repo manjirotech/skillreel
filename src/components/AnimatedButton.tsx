@@ -19,11 +19,11 @@ export default function AnimatedButton({
   className = "",
 }: AnimatedButtonProps) {
   const baseClasses =
-    "w-full h-14 font-semibold rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:transform-none disabled:hover:scale-100"
+    "w-full h-14 font-semibold transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:transform-none disabled:hover:scale-100 rounded-md"
 
   const variantClasses = {
     primary:
-      "text-white bg-black hover:bg-gray-800 border-2 border-transparent bg-gradient-to-r from-blue-500 to-purple-600 p-[2px] disabled:opacity-50",
+      "text-white bg-black hover:bg-gray-800 border-transparent bg-gradient-to-r from-[#40C9FF] to-[#E81CFF] p-[4px] rounded-md disabled:opacity-50",
     secondary: "bg-yellow-500 hover:bg-yellow-600 text-black hover:shadow-lg",
     outline: "border-black text-black hover:bg-black hover:text-white hover:shadow-lg",
   }
@@ -31,7 +31,7 @@ export default function AnimatedButton({
   if (variant === "primary") {
     return (
       <Button onClick={onClick} disabled={disabled} className={`${baseClasses} ${variantClasses.primary} ${className}`}>
-        <div className="w-full h-full bg-black rounded-full flex items-center justify-center disabled:bg-gray-600">
+        <div className="w-full h-full bg-black rounded-full flex items-center justify-center rounded-md disabled:bg-gray-600">
           {children}
         </div>
       </Button>

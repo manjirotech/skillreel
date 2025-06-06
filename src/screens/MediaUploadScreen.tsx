@@ -1,5 +1,6 @@
 "use client"
 
+import { useCallback } from "react"
 import { Check, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -7,9 +8,10 @@ import AnimatedButton from "../components/AnimatedButton"
 import ModernUploadArea from "../components/ModernUploadArea"
 import { handleImageUpload, removeImage } from "../utils/imageUpload"
 import type { ScreenProps } from "../types"
+import { Book } from "lucide-react"
 
 interface MediaUploadScreenProps
-  extends Pick<ScreenProps, "onNext" | "userInfo" | "setUserInfo" | "uploadedImages" | "setUploadedImages"> {}
+  extends Pick<ScreenProps, "onNext" | "userInfo" | "setUserInfo" | "uploadedImages" | "setUploadedImages"> { }
 
 export default function MediaUploadScreen({
   onNext,
@@ -28,8 +30,8 @@ export default function MediaUploadScreen({
   const instagramComplete = isInstagramValid && (userInfo.instagram.length > 0 || true) // Instagram is optional, so always complete
   const imagesComplete = isImagesValid
 
-  const completedFields = [instagramComplete, imagesComplete].filter(Boolean).length
-  const totalFields = 2
+  const completedFields = [imagesComplete].filter(Boolean).length
+  const totalFields = 1
   const completionPercentage = (completedFields / totalFields) * 100
 
   const getFieldStatus = (isValid: boolean, hasValue: boolean) => {
@@ -37,15 +39,32 @@ export default function MediaUploadScreen({
     return isValid ? "success" : "error"
   }
 
+  const onImageUploadHandler = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      // Pass the current uploadedImages state and the setter to the utility function
+      handleImageUpload(event, uploadedImages, setUploadedImages)
+    },
+    [uploadedImages, setUploadedImages] // Dependencies for useCallback
+  )
+
+  const onRemoveImageHandler = useCallback(
+    (id: string) => {
+      // Pass the id and the setter to the utility function
+      removeImage(id, setUploadedImages)
+    },
+    [setUploadedImages] // Dependency for useCallback (setUploadedImages is stable)
+  )
+
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-400 via-purple-300 to-blue-200 p-6 py-12">
+    <div className="min-h-screen bg-[url('../assets/background.png')] bg-cover bg-center p-6 py-8">
       <div className="w-full max-w-sm mx-auto">
         {/* Header */}
         <div className="text-center mb-6 animate-fade-in-up">
           <h2 className="text-2xl font-bold text-black mb-2">
-            Lights. Camera. <span className="text-purple-600">You!</span>
+            Lights. Camera. <span style={{ backgroundImage: "linear-gradient(91.63deg, #AC5EF8 56.26%, #833FD9 66.13%, #3B09A3 86.28%)" }} className="bg-clip-text text-transparent">You!</span>
           </h2>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-[#555555] font-semibold font-family-poppins">
             Drop your Insta and 2-4 snaps
             <br />
             We're setting the stage for you.
@@ -61,9 +80,8 @@ export default function MediaUploadScreen({
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  completionPercentage === 100 ? "bg-green-500" : "bg-purple-500"
-                }`}
+                className={`h-2 rounded-full transition-all duration-500 ${completionPercentage === 100 ? "bg-green-500" : "bg-purple-500"
+                  }`}
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>
@@ -84,13 +102,12 @@ export default function MediaUploadScreen({
                 placeholder="https://instagram.com/yourhandle"
                 value={userInfo.instagram}
                 onChange={(e) => setUserInfo((prev) => ({ ...prev, instagram: e.target.value }))}
-                className={`h-12 bg-white/50 border rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-10 ${
-                  getFieldStatus(isInstagramValid, !!userInfo.instagram) === "success"
+                className={`h-12 bg-white/50 border rounded-lg text-black placeholder:text-gray-500 transition-all duration-300 pr-10 ${getFieldStatus(isInstagramValid, !!userInfo.instagram) === "success"
                     ? "border-green-500 focus:border-green-500 focus:shadow-green"
                     : getFieldStatus(isInstagramValid, !!userInfo.instagram) === "error"
                       ? "border-red-500 focus:border-red-500 focus:shadow-red"
                       : "border-gray-300 focus:border-purple-500 focus:shadow-purple"
-                } hover:bg-white/60 focus:bg-white/70`}
+                  } hover:bg-white/60 focus:bg-white/70`}
               />
               {userInfo.instagram && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -113,8 +130,8 @@ export default function MediaUploadScreen({
 
             <ModernUploadArea
               uploadedImages={uploadedImages}
-              onImageUpload={(e) => handleImageUpload(e, uploadedImages, setUploadedImages)}
-              onRemoveImage={(id) => removeImage(id, setUploadedImages)}
+              onImageUpload={onImageUploadHandler}
+              onRemoveImage={onRemoveImageHandler}
               disabled={uploadedImages.length >= 4}
             />
           </div>
@@ -122,6 +139,7 @@ export default function MediaUploadScreen({
           {/* Continue Button */}
           <div className="pt-4 animate-fade-in-up animation-delay-400">
             <AnimatedButton onClick={() => onNext(4)} disabled={!isFormValid} variant="primary">
+              <Book className="w-5 h-5 mr-2" />
               Continue Your Story
             </AnimatedButton>
           </div>
