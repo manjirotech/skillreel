@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react"
 
 export default function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-400 via-purple-300 to-blue-200 flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[url('../assets/background.png')] bg-cover bg-center flex flex-col items-center justify-center p-6">
       <div className="text-center space-y-6">
         <div className="relative">
           <Loader2 className="w-12 h-12 text-purple-600 animate-spin mx-auto" />

@@ -95,7 +95,7 @@ export default function QuestionScreen({ onNext, currentQuestion, onNextQuestion
             <div className="flex items-center justify-center mb-2 gap-[0.2rem]">
               <div
                 style={{ background: "linear-gradient(180deg, #7251D3 12.02%, #7D54DA 43.27%, #9A5DEB 73.56%, #AD63F6 90.38%)" }}
-                className="w-10 h-10 p-2 rounded-full flex items-center justify-center"
+                className="w-10 h-10 p-2 rounded-full flex items-center justify-center flex-shrink-0 hover:bg-purple-700 transition-colors duration-300 animate-bounce-gentle"
               >
                 {getQuestionIcon()}
               </div>
@@ -124,7 +124,7 @@ export default function QuestionScreen({ onNext, currentQuestion, onNextQuestion
 
         {/* Skip button - only show for optional questions (5th and 7th) */}
         {isOptionalQuestion && (
-          <div className="text-center mt-6 animate-fade-in animation-delay-600">
+          <div className="text-center mt-3 animate-fade-in animation-delay-600">
             <Button
               onClick={onNextQuestion}
               variant="secondary"

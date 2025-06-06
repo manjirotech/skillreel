@@ -3,7 +3,19 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { Play, Square, RotateCcw, Check, Camera, Mic, AlertCircle, FlipHorizontal, Sparkles, StopCircle } from "lucide-react"
+import {
+  Play,
+  RotateCcw,
+  Check,
+  Camera,
+  Mic,
+  AlertCircle,
+  FlipHorizontal,
+  Sparkles,
+  StopCircle,
+  X,
+  PlayCircle,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import AnimatedButton from "./AnimatedButton"
 import { useToast } from "@/components/ui/use-toast"
@@ -34,12 +46,15 @@ export default function VideoRecorder({
   const [error, setError] = useState<string | null>(null)
   const [permissionDenied, setPermissionDenied] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [showFullPreview, setShowFullPreview] = useState(false) // New state for full preview
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null) // New state for thumbnail
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [canStopRecording, setCanStopRecording] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const recordedVideoRef = useRef<HTMLVideoElement>(null)
+  const thumbnailVideoRef = useRef<HTMLVideoElement>(null) // New ref for thumbnail generation
   const chunksRef = useRef<Blob[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -62,6 +77,46 @@ export default function VideoRecorder({
       })
     }
   }, [])
+
+  // Generate thumbnail from video
+  const generateThumbnail = (videoUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video")
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"))
+        return
+      }
+
+      video.crossOrigin = "anonymous"
+      video.currentTime = 0.1 // Get frame at 0.1 seconds
+
+      video.onloadeddata = () => {
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        ctx.drawImage(video, 0, 0)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const thumbnailUrl = URL.createObjectURL(blob)
+              resolve(thumbnailUrl)
+            } else {
+              reject(new Error("Could not generate thumbnail"))
+            }
+          },
+          "image/jpeg",
+          0.8,
+        )
+      }
+
+      video.onerror = () => reject(new Error("Video load error"))
+      video.src = videoUrl
+      video.load()
+    })
+  }
 
   // Initialize camera
   const initializeCamera = async (mode: "user" | "environment" = facingMode) => {
@@ -144,7 +199,7 @@ export default function VideoRecorder({
         }
       }
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, {
           type: recorder.mimeType || "video/webm",
         })
@@ -153,7 +208,17 @@ export default function VideoRecorder({
         // Create URL for preview
         const url = URL.createObjectURL(blob)
         setRecordedVideoUrl(url)
+
+        // Generate thumbnail
+        try {
+          const thumbUrl = await generateThumbnail(url)
+          setThumbnailUrl(thumbUrl)
+        } catch (err) {
+          console.error("Error generating thumbnail:", err)
+        }
+
         setShowPreview(true)
+        setShowFullPreview(false) // Start with thumbnail view
 
         // Save to storage only if initialized
         if (isInitialized) {
@@ -224,10 +289,15 @@ export default function VideoRecorder({
   const handleRetake = () => {
     // Clean up preview state
     setShowPreview(false)
+    setShowFullPreview(false)
     setRecordedBlob(null)
     if (recordedVideoUrl) {
       URL.revokeObjectURL(recordedVideoUrl)
       setRecordedVideoUrl(null)
+    }
+    if (thumbnailUrl) {
+      URL.revokeObjectURL(thumbnailUrl)
+      setThumbnailUrl(null)
     }
 
     // Reset recording state
@@ -249,6 +319,36 @@ export default function VideoRecorder({
     if (recordedBlob) {
       onVideoRecorded(recordedBlob)
     }
+  }
+
+  // Open full preview
+  const openFullPreview = () => {
+    setShowFullPreview(true)
+  }
+
+  // Close full preview
+  const closeFullPreview = () => {
+    setShowFullPreview(false)
+  }
+
+  // Close preview and return to camera
+  const closePreview = () => {
+    setShowPreview(false)
+    setShowFullPreview(false)
+    if (recordedVideoUrl) {
+      URL.revokeObjectURL(recordedVideoUrl)
+      setRecordedVideoUrl(null)
+    }
+    if (thumbnailUrl) {
+      URL.revokeObjectURL(thumbnailUrl)
+      setThumbnailUrl(null)
+    }
+    setRecordedBlob(null)
+
+    // Reinitialize camera
+    setTimeout(() => {
+      initializeCamera()
+    }, 100)
   }
 
   // Exit fullscreen
@@ -298,12 +398,22 @@ export default function VideoRecorder({
 
     if (!hasRecorded) {
       getVideo(currentQuestion)
-        .then((videoBlob) => {
+        .then(async (videoBlob) => {
           if (videoBlob) {
             setRecordedBlob(videoBlob)
             const url = URL.createObjectURL(videoBlob)
             setRecordedVideoUrl(url)
+
+            // Generate thumbnail for existing video
+            try {
+              const thumbUrl = await generateThumbnail(url)
+              setThumbnailUrl(thumbUrl)
+            } catch (err) {
+              console.error("Error generating thumbnail:", err)
+            }
+
             setShowPreview(true)
+            setShowFullPreview(false)
           } else {
             initializeCamera()
           }
@@ -314,12 +424,22 @@ export default function VideoRecorder({
         })
     } else {
       getVideo(currentQuestion)
-        .then((videoBlob) => {
+        .then(async (videoBlob) => {
           if (videoBlob) {
             setRecordedBlob(videoBlob)
             const url = URL.createObjectURL(videoBlob)
             setRecordedVideoUrl(url)
+
+            // Generate thumbnail for existing video
+            try {
+              const thumbUrl = await generateThumbnail(url)
+              setThumbnailUrl(thumbUrl)
+            } catch (err) {
+              console.error("Error generating thumbnail:", err)
+            }
+
             setShowPreview(true)
+            setShowFullPreview(false)
           }
         })
         .catch((err) => console.error("Error loading stored video:", err))
@@ -332,6 +452,9 @@ export default function VideoRecorder({
       }
       if (recordedVideoUrl) {
         URL.revokeObjectURL(recordedVideoUrl)
+      }
+      if (thumbnailUrl) {
+        URL.revokeObjectURL(thumbnailUrl)
       }
     }
   }, [isInitialized])
@@ -380,56 +503,116 @@ export default function VideoRecorder({
 
   console.log("recordedVideoUrl", recordedVideoUrl)
 
-  if (showPreview && recordedVideoUrl) {
+  // Full Preview Modal
+  if (showFullPreview && recordedVideoUrl) {
     return (
-      <div className="space-y-6 animate-scale-in">
-        {/* Modern Video Preview */}
-        <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-3xl overflow-hidden aspect-[9/16] max-h-[70vh] shadow-2xl border border-white/10">
-          <video
-            ref={recordedVideoRef}
-            src={recordedVideoUrl}
-            controls
-            className="w-full h-full object-cover"
-            playsInline
-            preload="metadata"
-            controlsList="nodownload"
-            onLoadedData={() => {
-              // Ensure video is ready to play
-              if (recordedVideoRef.current) {
-                recordedVideoRef.current.currentTime = 0
-              }
-            }}
-          />
-
-          {/* Modern Success overlay */}
-          <div className="absolute top-4 left-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 animate-bounce-gentle shadow-lg backdrop-blur-sm">
-            <Check className="w-4 h-4" />
-            <span>Perfect! 🎉</span>
-          </div>
-
-          {/* Video quality indicator */}
-          <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
-            HD Quality
-          </div>
-
-          {/* Gradient overlay for better button visibility */}
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-        </div>
-
-        {/* Modern Action buttons */}
-        <div className="flex space-x-3">
-          <Button
-            onClick={handleRetake}
-            variant="outline"
-            className="flex-1 h-14 hover:scale-105 transition-all duration-300 rounded-md border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 text-purple-700 font-semibold"
+      <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="relative w-full max-w-md mx-auto">
+          {/* Modern Close button */}
+          <button
+            onClick={closeFullPreview}
+            className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20 z-20"
           >
-            <RotateCcw className="w-5 h-5 mr-2" />
-            Retake 
-          </Button>
-          <AnimatedButton onClick={handleNext} variant="primary" className="flex-1 h-14">
-            <Check className="w-5 h-5 mr-2" />
-            Continue 
-          </AnimatedButton>
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Full Video Preview */}
+          <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-3xl overflow-hidden aspect-[9/16] shadow-2xl border border-white/10">
+            <video
+              ref={recordedVideoRef}
+              src={recordedVideoUrl}
+              controls
+              className="w-full h-full object-cover"
+              playsInline
+              preload="metadata"
+              controlsList="nodownload"
+              autoPlay
+              onLoadedData={() => {
+                if (recordedVideoRef.current) {
+                  recordedVideoRef.current.currentTime = 0
+                }
+              }}
+            />
+
+            {/* Success overlay */}
+            <div className="absolute top-4 left-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center space-x-2 animate-bounce-gentle shadow-lg backdrop-blur-sm">
+              <Check className="w-4 h-4" />
+              <span>Recorded! 🎉</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Thumbnail Preview - Modern Rectangular Block
+  if (showPreview && thumbnailUrl && !showFullPreview) {
+    return (
+      <div className="space-y-4 animate-scale-in">
+        {/* Modern Rectangular Preview Block */}
+        <div
+          className="relative bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden cursor-pointer group shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300"
+        >
+          {/* Thumbnail Container */}
+          <div className="relative aspect-video bg-black rounded-2xl overflow-hidden" onClick={openFullPreview}>
+            <img
+              src={thumbnailUrl || "/placeholder.svg"}
+              alt="Video thumbnail"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+
+            {/* Play overlay */}
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/30 transition-colors duration-300">
+              <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                <PlayCircle className="w-12 h-12 text-gray-800" />
+              </div>
+            </div>
+
+            {/* Success badge */}
+            <div className="absolute top-3 left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1.5 rounded-full text-xs font-medium flex items-center space-x-1.5 shadow-lg">
+              <Check className="w-3 h-3" />
+              <span>Recorded</span>
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div className="p-4">
+            {/* Success message */}
+            <div className="flex items-center justify-center space-x-2 text-green-600 mb-4">
+              <Sparkles className="w-5 h-5" />
+              <span className="text-lg font-semibold">Video recorded successfully!</span>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex space-x-3">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleRetake()
+                }}
+                variant="outline"
+                className="flex-1 h-12 hover:scale-105 transition-all duration-300 rounded-xl border-2 border-gray-300 hover:border-purple-400 hover:bg-purple-50 text-gray-700 hover:text-purple-700 font-semibold"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Retake
+              </Button>
+              <AnimatedButton
+                onClick={() => {
+                  handleNext()
+                }}
+                variant="primary"
+                className="flex-1 h-12"
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Next
+              </AnimatedButton>
+            </div>
+          </div>
+
+          {/* Click hint */}
+          <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            Tap to preview
+          </div>
         </div>
       </div>
     )
@@ -438,7 +621,7 @@ export default function VideoRecorder({
   return (
     <div
       ref={containerRef}
-      className={`space-y-6 ${isFullscreen ? "fixed inset-0 z-50 bg-black p-4 flex flex-col justify-center" : ""}`}
+      className={`space-y-4 ${isFullscreen ? "fixed inset-0 z-50 bg-black p-4 flex flex-col justify-center" : "max-w-md mx-auto"}`}
     >
       {/* Question text - only show when recording in fullscreen */}
       {isFullscreen && (
@@ -447,11 +630,10 @@ export default function VideoRecorder({
         </div>
       )}
 
-      {/* Modern Camera Preview */}
+      {/* Compact Modern Camera Preview */}
       <div
-        className={`relative bg-gradient-to-br from-gray-900 to-black rounded-3xl overflow-hidden ${
-          isFullscreen ? "flex-1 min-h-0" : "aspect-[9/16] max-h-[70vh]"
-        } shadow-2xl border border-white/10`}
+        className={`relative bg-gradient-to-br from-gray-900 to-black rounded-2xl overflow-hidden ${isFullscreen ? "flex-1 min-h-0" : "aspect-[4/3] max-h-[50vh]"
+          } shadow-xl border border-white/10 mx-auto max-w-md`}
       >
         {isInitializing ? (
           <div className="w-full h-full flex items-center justify-center">
@@ -511,7 +693,7 @@ export default function VideoRecorder({
 
                 {/* Modern Timer */}
                 <div className="absolute top-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-mono z-30 backdrop-blur-sm border border-white/20">
-                  {formatTime(recordingTime)} / 00:30
+                  {formatTime(recordingTime)} 
                 </div>
 
                 {/* Modern Circular progress */}
@@ -548,31 +730,31 @@ export default function VideoRecorder({
               </div>
             )}
 
-            {/* Modern Face guide overlay */}
+            {/* Compact Face guide overlay */}
             {!isRecording && !isFullscreen && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
                 <div className="relative">
-                  {/* Animated face guide */}
-                  <div className="w-56 h-72 border-2 border-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center relative animate-pulse-gentle">
+                  {/* Compact Animated face guide */}
+                  <div className="w-40 h-48 border-2 border-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center relative animate-pulse-gentle">
                     <div className="absolute inset-0 border-2 border-purple-400/50 rounded-full animate-ping" />
                     <div className="text-center z-10">
-                      <div className="text-4xl mb-3 animate-bounce-gentle">😊</div>
-                      <div className="bg-black/50 text-white px-4 py-2 rounded-full backdrop-blur-sm">
-                        <p className="text-sm font-medium">Center your face</p>
+                      <div className="text-3xl mb-2 animate-bounce-gentle">😊</div>
+                      <div className="bg-black/50 text-white px-3 py-1.5 rounded-full backdrop-blur-sm">
+                        <p className="text-xs font-medium">Center your face</p>
                         <p className="text-xs text-white/80">Look amazing!</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Corner guides */}
-                  <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-purple-400 rounded-tl-lg animate-pulse-gentle" />
-                  <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-purple-400 rounded-tr-lg animate-pulse-gentle" />
-                  <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-purple-400 rounded-bl-lg animate-pulse-gentle" />
-                  <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-purple-400 rounded-br-lg animate-pulse-gentle" />
+                  {/* Compact Corner guides */}
+                  <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-purple-400 rounded-tl-lg animate-pulse-gentle" />
+                  <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-purple-400 rounded-tr-lg animate-pulse-gentle" />
+                  <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-purple-400 rounded-bl-lg animate-pulse-gentle" />
+                  <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-purple-400 rounded-br-lg animate-pulse-gentle" />
 
-                  {/* Sparkle effects */}
-                  <Sparkles className="absolute -top-8 -right-8 w-6 h-6 text-purple-400 animate-pulse" />
-                  <Sparkles className="absolute -bottom-8 -left-8 w-4 h-4 text-pink-400 animate-pulse animation-delay-500" />
+                  {/* Compact Sparkle effects */}
+                  <Sparkles className="absolute -top-6 -right-6 w-4 h-4 text-purple-400 animate-pulse" />
+                  <Sparkles className="absolute -bottom-6 -left-6 w-3 h-3 text-pink-400 animate-pulse animation-delay-500" />
                 </div>
               </div>
             )}
@@ -595,32 +777,30 @@ export default function VideoRecorder({
       </div>
 
       {/* Modern Recording Controls */}
-      <div className={`text-center ${
-        isFullscreen
-          ? "flex-shrink-0 space-y-4" 
-          : "sticky bottom-0 z-20 py-4 space-y-4 w-full" 
-      }`}>
+      <div
+        className={`text-center ${isFullscreen ? "flex-shrink-0 space-y-4" : "sticky bottom-0 z-20 py-0 space-y-4 w-full"
+          }`}
+      >
         {!isRecording ? (
           <AnimatedButton
             onClick={startRecording}
             disabled={!stream || isInitializing}
             variant="primary"
-            className="h-12 text-lg font-semibold rounded-md w-full max-w-xs mx-auto" 
+            className="h-12 text-lg font-semibold rounded-md w-full max-w-xs mx-auto"
           >
             <Play className="w-6 h-6 mr-3" />
             Start Recording
           </AnimatedButton>
         ) : (
           <Button
-            onClick={stopRecording} 
+            onClick={stopRecording}
             disabled={!canStopRecording}
-            className={`w-full h-16 ${
-              canStopRecording
+            className={`w-full h-16 ${canStopRecording
                 ? "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
                 : "bg-gray-400 cursor-not-allowed"
-            } text-white rounded-md transition-all duration-300 hover:scale-105 active:scale-95 font-semibold text-lg shadow-lg`}
+              } text-white rounded-md transition-all duration-300 hover:scale-105 active:scale-95 font-semibold text-lg shadow-lg`}
           >
-            <StopCircle width={24} height={24} className="mr-1" /> 
+            <StopCircle width={24} height={24} className="mr-1" />
             {canStopRecording ? "Stop Recording" : `Record for ${3 - recordingTime} more seconds`}
           </Button>
         )}
